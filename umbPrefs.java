@@ -1,3 +1,4 @@
+package umb;
 /*
  * umbPrefs.java
  *
@@ -16,7 +17,7 @@ import java.util.logging.*;
 
 public class umbPrefs extends java.lang.Object {
     public LinkedList llProfiles = new LinkedList(); // clsPOPServers
-    public LinkedList llAllowedAddresses = new LinkedList(); // strings
+    public umbAddressBook theBook; // gets init'ed in constructor
     public Logger theLog = Logger.getAnonymousLogger();
     private boolean bLogPlease = false;
     
@@ -37,12 +38,7 @@ public class umbPrefs extends java.lang.Object {
         bLogPlease = prefs.getBoolean("DebugLog",false); // debug log
         
         // load addresses
-        String addyList = prefs.get("Addresses",""); // get from prefs
-        // convert "someone@nowhere.com,someoneelse@anywhere.com,spam@busters.org" to a LinkedList
-        st = new StringTokenizer(addyList,","); // get tokenizer for this string
-        while (st.hasMoreTokens()) { // while more tokens
-            llAllowedAddresses.add(st.nextToken()); // get token, put into linked list
-        } // wash rinse repeat
+        theBook = new umbAddressBook(prefs);
         
         // load profiles
         String profiles = prefs.get("Profiles","");
@@ -50,7 +46,7 @@ public class umbPrefs extends java.lang.Object {
         st = new StringTokenizer(profiles,","); // get tokenizer for this string
         while (st.hasMoreTokens()) {// while more tokens
             sTmp = st.nextToken(); // stmp = profile's name
-            POPServer thePOP = new POPServer(sTmp); // make profile
+            umbProfile thePOP = new umbProfile(sTmp); // make profile
             childNode = prefs.node(sTmp); // get child node for prefs
             thePOP.loadPrefs(childNode); // have it load it's preferences...
             llProfiles.add(thePOP);// put into linked list
@@ -73,23 +69,15 @@ public class umbPrefs extends java.lang.Object {
         Preferences prefs = Preferences.userRoot(); // get prefs for THIS package
         Preferences childNode;
         java.util.ListIterator li;
-        POPServer thePOP;
+        umbProfile thePOP;
         
         prefs = prefs.node("/Wiegand/UnwantedMailBlocker");
+        theBook.saveToPrefs(prefs);
         
-        // save addresses
-        sTmp = new String();
-        li = llAllowedAddresses.listIterator(); // get list iterator
-        while (li.hasNext()) { // while more items
-            sTmp = sTmp.concat((String) li.next()); // get next item and concat to sTmp
-            if (li.hasNext()) sTmp = sTmp.concat(","); // append only if not LAST item
-        }
-        prefs.put("Addresses",sTmp); // save to prefs
-        
-        // Now save profiles...
+        // Save profiles...
         li = llProfiles.listIterator(); // get list iterator
         while (li.hasNext()) { // while more items
-            thePOP = (POPServer) li.next(); // convert to clsPOPServer
+            thePOP = (umbProfile) li.next(); // convert to clsPOPServer
             childNode = prefs.node(thePOP.sName); // get prefs node
             thePOP.savePrefs(childNode); // save to prefs
         }

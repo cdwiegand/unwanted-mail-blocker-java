@@ -1,3 +1,4 @@
+package umb;
 /*
  * umbMessage.java
  *
@@ -16,12 +17,6 @@ public class umbMessage extends java.lang.Object {
     
     /** Creates a new instance of umbMessage */
     public umbMessage() {
-    }
-    
-    public String toString() {
-        String retValue = new String();
-        
-        return retValue;
     }
     
     public void InterpretLine(String s) {

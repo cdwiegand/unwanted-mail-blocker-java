@@ -1,3 +1,4 @@
+package umb;
 /*
  * umbProfile.java
  *
@@ -36,12 +37,6 @@ public class umbProfile extends java.lang.Object {
         sName = newName;
     }
     
-    public String toString() {
-        String ret = new String();
-        
-        return ret;
-    }
-    
     public void loadPrefs(java.util.prefs.Preferences thePrefs) {
         sPOPServer = thePrefs.get("POPServer","");
         sUsername = thePrefs.get("Username","");
@@ -62,7 +57,7 @@ public class umbProfile extends java.lang.Object {
         } catch (java.io.IOException eIgnore) {}
     }
     
-    public void login(unwantedmailblocker.Prefs thePrefs, unwantedmailblocker.Main theMain) throws Exception {
+    public void login(umbPrefs thePrefs, umbMain theMain) throws Exception {
         String s;
         String sError;
         
@@ -146,8 +141,8 @@ public class umbProfile extends java.lang.Object {
         }
     }
     
-    public EmailMsg retrieveMsg(int iMsgNum, unwantedmailblocker.Prefs thePrefs, unwantedmailblocker.Main theMain) throws Exception {
-        EmailMsg eMail = new EmailMsg();
+    public umbMessage retrieveMsg(int iMsgNum, umbPrefs thePrefs, umbMain theMain) throws Exception {
+        umbMessage eMail = new umbMessage();
         String s;
         String s2;
         String sMsgNum = new String().valueOf(iMsgNum);
@@ -194,7 +189,7 @@ public class umbProfile extends java.lang.Object {
         return eMail;
     }
     
-    public void closeServer(unwantedmailblocker.Prefs thePrefs) {
+    public void closeServer(umbPrefs thePrefs) {
         try {
             this.writeSingleLine("QUIT",thePrefs.theLog);
             theSock.close();

@@ -1,3 +1,4 @@
+package umb;
 /*
  * umbMain.java
  *
@@ -9,10 +10,15 @@
  * @author  chris
  */
 public class umbMain extends javax.swing.JFrame {
+    private javax.swing.DefaultListModel theList = new javax.swing.DefaultListModel(); // for the JList
+    private umbPrefs thePrefs = new umbPrefs();
+    private java.lang.Thread theFilterThread;
+    private umbFilter theFilter;
     
     /** Creates new form umbMain */
     public umbMain() {
         initComponents();
+        jList1.setModel(theList);
     }
     
     /** This method is called from within the constructor to
@@ -31,6 +37,7 @@ public class umbMain extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jProgressBar1 = new javax.swing.JProgressBar();
         jLabel3 = new javax.swing.JLabel();
+        jList1 = new javax.swing.JList();
         jPanel5 = new javax.swing.JPanel();
         jPanel51 = new javax.swing.JPanel();
         jPanel52 = new javax.swing.JPanel();
@@ -43,7 +50,7 @@ public class umbMain extends javax.swing.JFrame {
             }
         });
 
-        jPanel1.setLayout(new java.awt.BorderLayout());
+        jPanel1.setLayout(new java.awt.BorderLayout(0, 5));
 
         jPanel3.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
 
@@ -51,11 +58,17 @@ public class umbMain extends javax.swing.JFrame {
         jPanel3.add(jButton1);
 
         jButton2.setText("Start / Stop");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
         jPanel3.add(jButton2);
 
         jPanel1.add(jPanel3, java.awt.BorderLayout.SOUTH);
 
-        jPanel9.setLayout(new java.awt.BorderLayout());
+        jPanel9.setLayout(new java.awt.BorderLayout(0, 5));
 
         jLabel1.setText("UMB - Unwanted Mail Blocker v0.1");
         jPanel9.add(jLabel1, java.awt.BorderLayout.NORTH);
@@ -65,12 +78,14 @@ public class umbMain extends javax.swing.JFrame {
 
         jPanel1.add(jPanel9, java.awt.BorderLayout.NORTH);
 
-        jPanel2.setLayout(new java.awt.BorderLayout());
+        jPanel2.setLayout(new java.awt.BorderLayout(0, 5));
 
         jPanel2.add(jProgressBar1, java.awt.BorderLayout.NORTH);
 
         jLabel3.setText("...");
         jPanel2.add(jLabel3, java.awt.BorderLayout.SOUTH);
+
+        jPanel2.add(jList1, java.awt.BorderLayout.CENTER);
 
         jPanel1.add(jPanel2, java.awt.BorderLayout.CENTER);
 
@@ -86,6 +101,27 @@ public class umbMain extends javax.swing.JFrame {
 
         pack();
     }//GEN-END:initComponents
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // Add your handling code here:
+        if (jButton2.getText().equalsIgnoreCase("Start")) {
+            // start session
+            jButton2.setText("Stop");
+            theFilter = new umbFilter(this,thePrefs);
+            if (theFilterThread != null) {
+                theFilterThread.stop();
+            }
+            theFilterThread = new java.lang.Thread(theFilter);
+            theFilterThread.start();
+        } else {
+            // stop session
+            jButton2.setText("Start");
+            if (theFilterThread != null) {
+                theFilterThread.stop();
+                theFilterThread = null;
+            }
+        }
+    }//GEN-LAST:event_jButton2ActionPerformed
     
     /** Exit the Application */
     private void exitForm(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_exitForm
@@ -131,83 +167,22 @@ public class umbMain extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel52;
     private javax.swing.JPanel jPanel51;
     private javax.swing.JProgressBar jProgressBar1;
+    private javax.swing.JList jList1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
     
-    private void doStart() {
-        // check all POP3 servers...
-        java.util.ListIterator li;
-        unwantedmailblocker.POPServer thePOP;
-        
-        // FIXME: eventually, I want a tab where we show current progress vs. errors.
-        // FIXME: shouldn't this be a separate thread?
-        li = thePrefs.llProfiles.listIterator(); // get list iterator
-        while (li.hasNext()) { // while more items
-            thePOP = (POPServer) li.next(); // convert to clsPOPServer
-            try {
-                int iMsg = 0;
-                int iMsgCount = 0;
-                EmailMsg theMail;
-                thePOP.login(thePrefs,this); // try to login...
-                addInfoLine("Logged into ".concat(thePOP.sPOPServer));
-                addInfoLine("Messages: ".concat(new String().valueOf(thePOP.iMsgs)));
-                
-                // If, and only if, thePOP.iMsgs = -2, we weren't able to figure out how many
-                // Try 999 and when we get an exception we know we're done...
-                iMsgCount = thePOP.iMsgs;
-                if (iMsgCount == -2) {
-                    iMsgCount = 999;
-                }
-                if (iMsgCount > 0) {
-                    // Now, retrieve each message... processing as we go.
-                    for (iMsg = 1; iMsg <= iMsgCount; iMsg = iMsg + 1) {
-                        try {
-                            updateStatus(iMsg,iMsgCount);
-                            theMail = thePOP.retrieveMsg(iMsg,thePrefs,this);
-                            addInfoLine("Message: ".concat(theMail.sSubject));
-                            addInfoLine("From: ".concat(theMail.sFrom));
-                            addInfoLine("From 2: ".concat(theMail.sFrom2));
-                            // Is it a recognized address?
-                            if (isOKAddress(theMail,thePrefs)) {
-                                addInfoLine("Known recipient - it's Ok");
-                            } else {
-                                // unknown...
-                                addInfoLine("ARGH! MORE JUNK MAIL!!");
-                            }
-                            
-                        } catch (Exception e) {
-                            // Hmmm.... couldn't get it. Stop processing...
-                            iMsg = iMsgCount + 1;
-                        }
-                    } // for iMsg
-                } // if iMsgCount > 0
-                thePOP.closeServer(thePrefs);
-                
-            } catch (Exception e2) {
-                addInfoLine("Failed to login to POP3 server ".concat(thePOP.sPOPServer));
-                addInfoLine(e2.getMessage());
-            }
-        }
-        addInfoLine("Done!");
-        jButton1.setText("Start");
-    }
-    
-    /* FIXME
-     *public void addInfoLine(String s) {
-     *    theList.addElement(s);
-     *    this.jList1.repaint();
-     *    this.repaint();
-     *}
-     *
-     *public void updateStatus(int iValue, int iMax) {
-     *    this.jProgressBar1.setMaximum(iMax);
-     *    this.jProgressBar1.setValue(iValue);
-     *    this.jProgressBar1.repaint();
-     *    this.repaint();
-     *}
-     */
-    
-    
+     public void addInfoLine(String s) {
+         theList.addElement(s);
+         this.jList1.repaint();
+         this.repaint();
+     }
+     
+     public void updateStatus(int iValue, int iMax) {
+         this.jProgressBar1.setMaximum(iMax);
+         this.jProgressBar1.setValue(iValue);
+         this.jProgressBar1.repaint();
+         this.repaint();
+     }    
 }
