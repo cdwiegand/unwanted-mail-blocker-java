@@ -17,10 +17,13 @@ public class umbAddressBook extends java.util.LinkedList {
     private java.util.LinkedList llAddresses = new java.util.LinkedList();
     
     /** Creates a new instance of umbAddressBook */
-    public umbAddressBook(Preferences theNode) {
+    public umbAddressBook() {
         super();
 
-        String addyList = theNode.get("Addresses",""); // get from prefs
+        java.util.prefs.Preferences prefs; // get prefs for THIS package
+        prefs = java.util.prefs.Preferences.userRoot().node("/Wiegand/UnwantedMailBlocker");
+
+        String addyList = prefs.get("Addresses",""); // get from prefs
         // convert "someone@nowhere.com,someoneelse@anywhere.com,spam@busters.org" to a LinkedList
         // loads comma-delimited list into LinkedList...
         java.util.StringTokenizer st = new java.util.StringTokenizer(addyList,",");
@@ -31,9 +34,12 @@ public class umbAddressBook extends java.util.LinkedList {
         }
     }
     
-    public void saveToPrefs(Preferences theNode) {
+    protected void finalize() {
+        java.util.prefs.Preferences prefs; // get prefs for THIS package
+        prefs = java.util.prefs.Preferences.userRoot().node("/Wiegand/UnwantedMailBlocker");
+
         // must save address book...
-        theNode.put("Addresses",toString());
+        prefs.put("Addresses",toString());
     }
     
     public String toString() {

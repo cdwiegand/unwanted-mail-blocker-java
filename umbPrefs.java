@@ -17,7 +17,8 @@ import java.util.logging.*;
 
 public class umbPrefs extends java.lang.Object {
     public LinkedList llProfiles = new LinkedList(); // clsPOPServers
-    public umbAddressBook theBook; // gets init'ed in constructor
+    public LinkedList llTemplates = new LinkedList(); // umbTemplates
+    public umbAddressBook theBook = new umbAddressBook();
     public Logger theLog = Logger.getAnonymousLogger();
     private boolean bLogPlease = false;
     
@@ -36,9 +37,6 @@ public class umbPrefs extends java.lang.Object {
         prefs.putBoolean("TestBoolean",true);
         
         bLogPlease = prefs.getBoolean("DebugLog",false); // debug log
-        
-        // load addresses
-        theBook = new umbAddressBook(prefs);
         
         // load profiles
         String profiles = prefs.get("Profiles","");
@@ -64,7 +62,7 @@ public class umbPrefs extends java.lang.Object {
         //    }
     }
     
-    public void SavePrefs() {
+    protected void finalize() {
         String sTmp;
         Preferences prefs = Preferences.userRoot(); // get prefs for THIS package
         Preferences childNode;
@@ -72,7 +70,6 @@ public class umbPrefs extends java.lang.Object {
         umbProfile thePOP;
         
         prefs = prefs.node("/Wiegand/UnwantedMailBlocker");
-        theBook.saveToPrefs(prefs);
         
         // Save profiles...
         li = llProfiles.listIterator(); // get list iterator

@@ -13,8 +13,10 @@ public class umbFilter extends java.lang.Object implements Runnable {
     umbMain theMainForm;
     umbPrefs thePrefs;
     
+    
     /** Creates a new instance of umbFilter */
     public umbFilter(umbMain pTheMainForm, umbPrefs pThePrefs) {
+       super();
        theMainForm = pTheMainForm;
        thePrefs = pThePrefs;
     }
@@ -34,6 +36,7 @@ public class umbFilter extends java.lang.Object implements Runnable {
                 int iMsg = 0;
                 int iMsgCount = 0;
                 umbMessage theMail;
+                theMainForm.updateStatus(0,1,"Connecting to server ".concat(thePOP.sPOPServer));
                 thePOP.login(thePrefs,theMainForm); // try to login...
                 theMainForm.addInfoLine("Logged into ".concat(thePOP.sPOPServer));
                 theMainForm.addInfoLine("Messages: ".concat(new String().valueOf(thePOP.iMsgs)));
@@ -49,7 +52,7 @@ public class umbFilter extends java.lang.Object implements Runnable {
                     // Now, retrieve each message... processing as we go.
                     for (iMsg = 1; iMsg <= iMsgCount; iMsg = iMsg + 1) {
                         try {
-                            theMainForm.updateStatus(iMsg,iMsgCount);
+                            theMainForm.updateStatus(iMsg,iMsgCount,"Retrieving message ".concat(new String().valueOf(iMsg)).concat("..."));
                             theMail = thePOP.retrieveMsg(iMsg,thePrefs,theMainForm);
                             theMainForm.addInfoLine("Message: ".concat(theMail.sSubject));
                             theMainForm.addInfoLine("From: ".concat(theMail.sFrom).concat(" ").concat(theMail.sFrom2));
@@ -75,5 +78,7 @@ public class umbFilter extends java.lang.Object implements Runnable {
             }
         }
         theMainForm.addInfoLine("Done!");
+        theMainForm.updateStatus(4,4,"Done!");
+        theMainForm.threadDone();
     }
 }

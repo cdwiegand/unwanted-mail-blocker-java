@@ -18,7 +18,8 @@ public class umbMain extends javax.swing.JFrame {
     /** Creates new form umbMain */
     public umbMain() {
         initComponents();
-        jList1.setModel(theList);
+        // jList1.setModel(theList);
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
     
     /** This method is called from within the constructor to
@@ -57,7 +58,7 @@ public class umbMain extends javax.swing.JFrame {
         jButton1.setText("Preferences");
         jPanel3.add(jButton1);
 
-        jButton2.setText("Start / Stop");
+        jButton2.setText("Start");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton2ActionPerformed(evt);
@@ -85,6 +86,12 @@ public class umbMain extends javax.swing.JFrame {
         jLabel3.setText("...");
         jPanel2.add(jLabel3, java.awt.BorderLayout.SOUTH);
 
+        jList1.setModel(new javax.swing.AbstractListModel() {
+            String[] strings = { "theList" };
+            public int getSize() { return strings.length; }
+            public Object getElementAt(int i) { return strings[i]; }
+        });
+        jList1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         jPanel2.add(jList1, java.awt.BorderLayout.CENTER);
 
         jPanel1.add(jPanel2, java.awt.BorderLayout.CENTER);
@@ -101,7 +108,7 @@ public class umbMain extends javax.swing.JFrame {
 
         pack();
     }//GEN-END:initComponents
-
+    
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // Add your handling code here:
         if (jButton2.getText().equalsIgnoreCase("Start")) {
@@ -127,6 +134,15 @@ public class umbMain extends javax.swing.JFrame {
     private void exitForm(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_exitForm
         System.exit(0);
     }//GEN-LAST:event_exitForm
+    
+    public void threadDone() {
+        // called from thread..
+        jButton2.setText("Start");
+        if (theFilterThread != null) {
+            theFilterThread.stop();
+            theFilterThread = null;
+        }
+    }
     
     /**
      * @param args the command line arguments
@@ -173,16 +189,18 @@ public class umbMain extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
     
-     public void addInfoLine(String s) {
-         theList.addElement(s);
-         this.jList1.repaint();
-         this.repaint();
-     }
-     
-     public void updateStatus(int iValue, int iMax) {
-         this.jProgressBar1.setMaximum(iMax);
-         this.jProgressBar1.setValue(iValue);
-         this.jProgressBar1.repaint();
-         this.repaint();
-     }    
+    public void addInfoLine(String s) {
+        theList.addElement(s);
+        this.jList1.repaint();
+        this.repaint();
+    }
+    
+    public void updateStatus(int iValue, int iMax, String sText) {
+        this.jProgressBar1.setMaximum(iMax);
+        this.jProgressBar1.setValue(iValue);
+        this.jProgressBar1.repaint();
+        this.jLabel3.setText(sText);
+        this.jLabel3.repaint();
+        this.repaint();
+    }
 }
