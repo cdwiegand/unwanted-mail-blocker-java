@@ -362,6 +362,9 @@ public class umbProfile extends java.lang.Object {
         } else {
             l = theBIS.read(b); // read from socket...
             sRet = new String(b,0,l);
+            // might end with /r/n or just /n...
+            if (sRet.endsWith("\n")) sRet = sRet.substring(0,sRet.length()-1);
+            if (sRet.endsWith("\r")) sRet = sRet.substring(0,sRet.length()-1);
             theLog.log(Level.FINEST,"Received: ".concat(sRet));
         }
         return sRet;
