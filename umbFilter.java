@@ -13,7 +13,6 @@ public class umbFilter extends java.lang.Object implements Runnable {
     umbMain theMainForm;
     umbPrefs thePrefs;
     
-    
     /** Creates a new instance of umbFilter */
     public umbFilter(umbMain pTheMainForm, umbPrefs pThePrefs) {
        super();
@@ -37,7 +36,7 @@ public class umbFilter extends java.lang.Object implements Runnable {
                 int iMsgCount = 0;
                 umbMessage theMail;
                 theMainForm.updateStatus(0,1,"Connecting to server ".concat(thePOP.sPOPServer));
-                thePOP.login(thePrefs,theMainForm); // try to login...
+                thePOP.loginPOP3(thePrefs,theMainForm); // try to login...
                 theMainForm.addInfoLine("Logged into ".concat(thePOP.sPOPServer));
                 theMainForm.addInfoLine("Messages: ".concat(new String().valueOf(thePOP.iMsgs)));
                 
@@ -53,16 +52,38 @@ public class umbFilter extends java.lang.Object implements Runnable {
                     for (iMsg = 1; iMsg <= iMsgCount; iMsg = iMsg + 1) {
                         try {
                             theMainForm.updateStatus(iMsg,iMsgCount,"Retrieving message ".concat(new String().valueOf(iMsg)).concat("..."));
-                            theMail = thePOP.retrieveMsg(iMsg,thePrefs,theMainForm);
+                            theMail = thePOP.retrievePOPMsg(iMsg,thePrefs,theMainForm);
                             theMainForm.addInfoLine("Message: ".concat(theMail.sSubject));
                             theMainForm.addInfoLine("From: ".concat(theMail.sFrom).concat(" ").concat(theMail.sFrom2));
                             // Is it a recognized address?
                             if (theBook.isOKAddress(theMail)) {
-                                theMainForm.addInfoLine("Known recipient - it's Ok");
+                                theMainForm.addInfoLine("Known recipient - it's ok.");
                             } else {
                                 // unknown...
-                                theMainForm.addInfoLine("ARGH! MORE JUNK MAIL!!");
-                            }
+                                theMainForm.addInfoLine("Unknown recipient - prompting for action.");
+                                umbPrompt thePrompt = new umbPrompt(theMainForm,true,theMail);
+                                thePrompt.show();
+                                if (thePrompt.getReturnStatus() == thePrompt.RET_CANCEL) {
+                                    // cancelled - ignore this spam
+                                } else {
+                                    if (thePrompt.isSpam()) {
+                                         umbSMTPMessage newSMTP = new umbSMTPMessage();
+                                         newSMTP.PrepSpam(theMail);
+                                         thePOP.sendMailSMTP(thePrefs,theMainForm,newSMTP);
+                                    }
+                                    if (thePrompt.getRequestAuth()) {
+                                         umbSMTPMessage newSMTP = new umbSMTPMessage();
+                                         newSMTP.PrepAuthorize(theMail);
+                                         thePOP.sendMailSMTP(thePrefs,theMainForm,newSMTP);
+                                    }
+                                    if (thePrompt.getAddUser()) {
+                                        
+                                    }
+                                    if (thePrompt.getDeleteMsg()) {
+                                        thePOP.deletePOPMessage(iMsg,thePrefs,theMainForm);
+                                    }
+                                } // return status ?= cancel (ignore) or ok (filter)
+                            } // known vs. unknwon recip
                             
                         } catch (Exception e) {
                             // Hmmm.... couldn't get it. Stop processing...
@@ -70,7 +91,7 @@ public class umbFilter extends java.lang.Object implements Runnable {
                         }
                     } // for iMsg
                 } // if iMsgCount > 0
-                thePOP.closeServer(thePrefs);
+                thePOP.logoutPOP3(thePrefs);
                 
             } catch (Exception e2) {
                 theMainForm.addInfoLine("Failed to login to POP3 server ".concat(thePOP.sPOPServer));

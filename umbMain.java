@@ -18,7 +18,7 @@ public class umbMain extends javax.swing.JFrame {
     /** Creates new form umbMain */
     public umbMain() {
         initComponents();
-        // jList1.setModel(theList);
+        jList1.setModel(theList);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
     
@@ -86,11 +86,6 @@ public class umbMain extends javax.swing.JFrame {
         jLabel3.setText("...");
         jPanel2.add(jLabel3, java.awt.BorderLayout.SOUTH);
 
-        jList1.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "theList" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
         jList1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         jPanel2.add(jList1, java.awt.BorderLayout.CENTER);
 
@@ -163,6 +158,7 @@ public class umbMain extends javax.swing.JFrame {
                     prefs.put("Username","username");
                     prefs.put("Password","hushitsasecret");
                     prefs.put("SMTPServer","daspost.myisp.es");
+                    prefs.put("SMTPEmailAddress","username@my.isp");
                 } // if (args[i]
             } // for i
         } // if args.length

@@ -19,15 +19,17 @@ public class umbProfile extends java.lang.Object {
     public String sUsername = new String();
     public String sPassword = new String();
     public String sSMTPServer = new String();
+    public String sEmailAddress = new String();
     public String sName = new String();
     public int iMsgs = -1;
     
-    private Socket theSock;
-    private java.io.InputStream theIS;
-    private java.io.OutputStream theOS;
-    private java.io.BufferedInputStream theBIS;
-    private java.io.BufferedOutputStream theBOS;
+    private Socket thePOPSock;
+    private java.io.BufferedInputStream thePOPBIS;
+    private java.io.BufferedOutputStream thePOPBOS;
     
+    private Socket theSMTPSock;
+    private java.io.BufferedInputStream theSMTPBIS;
+    private java.io.BufferedOutputStream theSMTPBOS;
     
     /** Creates a new instance of umbProfile */
     public umbProfile() {
@@ -42,6 +44,12 @@ public class umbProfile extends java.lang.Object {
         sUsername = thePrefs.get("Username","");
         sPassword = thePrefs.get("Password","");
         sSMTPServer = thePrefs.get("SMTPServer","");
+        // defaults to username@smtpserver
+        sEmailAddress = thePrefs.get("SMTPEmailAddress",sUsername.concat("@").concat(sSMTPServer));
+    }
+    
+    protected void finalize(java.util.prefs.Preferences thePrefs) {
+        savePrefs(thePrefs);
     }
     
     public void savePrefs(java.util.prefs.Preferences thePrefs) {
@@ -49,31 +57,24 @@ public class umbProfile extends java.lang.Object {
         thePrefs.put("Username",sUsername);
         thePrefs.put("Password",sPassword);
         thePrefs.put("SMTPServer",sSMTPServer);
+        thePrefs.put("SMTPEmailAddress",sEmailAddress);
     }
     
-    public void close() {
-        try {
-            theSock.close();
-        } catch (java.io.IOException eIgnore) {}
-    }
-    
-    public void login(umbPrefs thePrefs, umbMain theMain) throws Exception {
+    public void loginPOP3(umbPrefs thePrefs, umbMain theMain) throws Exception {
         String s;
         String sError;
         
         try {
-            theSock = new Socket(sPOPServer,110); // connect to server...
-            theIS = theSock.getInputStream();
-            theBIS = new java.io.BufferedInputStream(theIS);
-            theOS = theSock.getOutputStream();
-            theBOS = new java.io.BufferedOutputStream(theOS);
+            thePOPSock = new Socket(sPOPServer,110); // connect to server...
+            thePOPBIS = new java.io.BufferedInputStream(thePOPSock.getInputStream());
+            thePOPBOS = new java.io.BufferedOutputStream(thePOPSock.getOutputStream());
         } catch (Exception e) {
             thePrefs.theLog.log(Level.SEVERE,"Unable to create socket in login of POPServer.java");
             throw new Exception("Unable to create socket.",e);
         }
         
         try {
-            s = this.readSingleLine(thePrefs.theLog);
+            s = this.readSingleLine(thePOPBIS,thePrefs.theLog);
             theMain.addInfoLine(s);
             if (!s.startsWith("+OK")) {
                 // oh, too bad!
@@ -84,9 +85,9 @@ public class umbProfile extends java.lang.Object {
             
             s = "USER ".concat(sUsername);
             theMain.addInfoLine(s);
-            this.writeSingleLine(s,thePrefs.theLog);
+            this.writeSingleLine(thePOPBOS,s,thePrefs.theLog);
             
-            s = this.readSingleLine(thePrefs.theLog);
+            s = this.readSingleLine(thePOPBIS,thePrefs.theLog);
             theMain.addInfoLine(s);
             if (!s.startsWith("+OK")) {
                 // oh, too bad!
@@ -97,9 +98,9 @@ public class umbProfile extends java.lang.Object {
             
             s = "PASS ".concat(sPassword);
             theMain.addInfoLine("PASS (shh!)");
-            this.writeSingleLine(s,thePrefs.theLog);
+            this.writeSingleLine(thePOPBOS,s,thePrefs.theLog);
             
-            s = this.readSingleLine(thePrefs.theLog);
+            s = this.readSingleLine(thePOPBIS,thePrefs.theLog);
             theMain.addInfoLine(s);
             if (!s.startsWith("+OK")) {
                 // oh, too bad!
@@ -110,9 +111,9 @@ public class umbProfile extends java.lang.Object {
             
             s = "LIST";
             theMain.addInfoLine(s);
-            this.writeSingleLine(s,thePrefs.theLog);
+            this.writeSingleLine(thePOPBOS,s,thePrefs.theLog);
             
-            s = this.readSingleLine(thePrefs.theLog);
+            s = this.readSingleLine(thePOPBIS,thePrefs.theLog);
             theMain.addInfoLine(s);
             if (!s.startsWith("+OK")) {
                 // oh, too bad!
@@ -141,7 +142,27 @@ public class umbProfile extends java.lang.Object {
         }
     }
     
-    public umbMessage retrieveMsg(int iMsgNum, umbPrefs thePrefs, umbMain theMain) throws Exception {
+    public void deletePOPMessage(int iMsgNum, umbPrefs thePrefs, umbMain theMain) throws Exception {
+        String s;
+        String s2;
+        String sMsgNum = new String().valueOf(iMsgNum);
+        
+        try {
+            flushInput(thePOPBIS,thePrefs.theLog);
+            writeSingleLine(thePOPBOS,"DELE ".concat(sMsgNum),thePrefs.theLog);
+            s = this.readSingleLine(thePOPBIS,thePrefs.theLog);
+            if (!s.startsWith("+OK")) {
+                // oh, too bad!
+                thePrefs.theLog.log(Level.SEVERE,"Message delete (".concat(sMsgNum).concat(") failed. Message: ").concat(s));
+                throw new Exception("Message delete (".concat(sMsgNum).concat(") failed. Message: ").concat(s));
+            }
+        } catch (Exception e) {
+            thePrefs.theLog.log(Level.SEVERE,"Unable to talk to POP3 server or interrupted in login of POPServer.java");
+            throw new Exception("Unable to talk to POP3 server or interrupted.",e);
+        }
+    }
+    
+    public umbMessage retrievePOPMsg(int iMsgNum, umbPrefs thePrefs, umbMain theMain) throws Exception {
         umbMessage eMail = new umbMessage();
         String s;
         String s2;
@@ -149,10 +170,9 @@ public class umbProfile extends java.lang.Object {
         boolean bBreakOut = false;
         
         try {
-            flushInput(thePrefs.theLog);
-            // FIXME: support head, if the server supports it (add a boolean variable, and do the check in login()
-            writeSingleLine("RETR ".concat(sMsgNum),thePrefs.theLog);
-            s = this.readSingleLine(thePrefs.theLog);
+            flushInput(thePOPBIS,thePrefs.theLog);
+            writeSingleLine(thePOPBOS,"RETR ".concat(sMsgNum),thePrefs.theLog);
+            s = this.readSingleLine(thePOPBIS,thePrefs.theLog);
             if (s.startsWith("-ERR")) {
                 // oh, too bad!
                 thePrefs.theLog.log(Level.SEVERE,"Message retrieve (".concat(sMsgNum).concat(") failed. Message: ").concat(s));
@@ -167,14 +187,14 @@ public class umbProfile extends java.lang.Object {
                     while (st.hasMoreTokens()) {
                         s2 = st.nextToken();
                         thePrefs.theLog.log(Level.INFO,"POP3: ".concat(s2));
-                        eMail.InterpretLine(s2);
+                        eMail.InterpretPOP3Line(s2);
                         if (s2.equalsIgnoreCase(".")) {
                             // end of message
                             bBreakOut = true;
                         }
                     }
                     try {
-                        if (!bBreakOut) s = this.readSingleLine(thePrefs.theLog);
+                        if (!bBreakOut) s = this.readSingleLine(thePOPBIS,thePrefs.theLog);
                     } catch (java.io.IOException e) {
                         // ahh... oh well, try to continue as best as we can...
                     }
@@ -189,14 +209,125 @@ public class umbProfile extends java.lang.Object {
         return eMail;
     }
     
-    public void closeServer(umbPrefs thePrefs) {
+    public void sendMailSMTP(umbPrefs thePrefs, umbMain theMain, umbSMTPMessage theMsg) throws Exception {
+        String s;
+        String sError;
+        
         try {
-            this.writeSingleLine("QUIT",thePrefs.theLog);
-            theSock.close();
+            theSMTPSock = new Socket(sSMTPServer,25); // connect to server...
+            theSMTPBIS = new java.io.BufferedInputStream(theSMTPSock.getInputStream());
+            theSMTPBOS = new java.io.BufferedOutputStream(theSMTPSock.getOutputStream());
+        } catch (Exception e) {
+            thePrefs.theLog.log(Level.SEVERE,"Unable to create socket in sendMsg of POPServer.java");
+            throw new Exception("Unable to create socket.",e);
+        }
+        
+        try {
+            s = this.readSingleLine(theSMTPBIS,thePrefs.theLog);
+            theMain.addInfoLine(s);
+            if (!s.startsWith("220")) {
+                // oh, too bad!
+                sError = "Unable to talk to SMTP server in sendMail";
+                thePrefs.theLog.log(Level.SEVERE,sError);
+                throw new Exception(sError);
+            }
+            
+            s = "HELO ".concat(theSMTPSock.getLocalAddress().getHostName());
+            theMain.addInfoLine(s);
+            this.writeSingleLine(theSMTPBOS,s,thePrefs.theLog);
+            
+            s = this.readSingleLine(theSMTPBIS,thePrefs.theLog);
+            theMain.addInfoLine(s);
+            if (!s.startsWith("250")) {
+                // oh, too bad!
+                sError = "SMTP-HELO negotiation failed. Message: ".concat(s);
+                thePrefs.theLog.log(Level.SEVERE,sError);
+                throw new Exception(sError);
+            }
+            
+            s = "MAIL FROM: ".concat(sEmailAddress);
+            theMain.addInfoLine(s);
+            this.writeSingleLine(theSMTPBOS,s,thePrefs.theLog);
+            
+            s = this.readSingleLine(theSMTPBIS,thePrefs.theLog);
+            theMain.addInfoLine(s);
+            if (!s.startsWith("250")) {
+                // oh, too bad!
+                sError = "From failed. Message: ".concat(s);
+                thePrefs.theLog.log(Level.SEVERE,sError);
+                throw new Exception(sError);
+            }
+            
+            java.util.StringTokenizer st = theMsg.recipTokenizer();
+            while (st.hasMoreTokens()) {
+                String sRcpt = st.nextToken();
+                s = "RCPT TO: ".concat(sRcpt);
+                theMain.addInfoLine(s);
+                this.writeSingleLine(theSMTPBOS,s,thePrefs.theLog);
+                
+                s = this.readSingleLine(theSMTPBIS,thePrefs.theLog);
+                theMain.addInfoLine(s);
+                if (!s.startsWith("250")) {
+                    // oh, too bad!
+                    sError = "Recipient failed. Message: ".concat(s);
+                    thePrefs.theLog.log(Level.SEVERE,sError);
+                    // throw new Exception(sError); // not for now FIXME eval whether to enable or not? --cdw
+                }
+            }
+            
+            s = "DATA";
+            theMain.addInfoLine(s);
+            this.writeSingleLine(theSMTPBOS,s,thePrefs.theLog);
+            
+            s = this.readSingleLine(theSMTPBIS,thePrefs.theLog);
+            theMain.addInfoLine(s);
+            if (s.startsWith("354")) {
+                this.writeSingleLine(theSMTPBOS,"Date: ".concat(new Date().toString()),thePrefs.theLog);
+                this.writeSingleLine(theSMTPBOS,"From: ".concat(sEmailAddress),thePrefs.theLog);
+                this.writeSingleLine(theSMTPBOS,"To: ".concat(theMsg.recipString()),thePrefs.theLog);
+                this.writeSingleLine(theSMTPBOS,"Subject: ".concat(theMsg.sSubject),thePrefs.theLog);
+                this.writeSingleLine(theSMTPBOS,"",thePrefs.theLog);
+                this.writeSingleLine(theSMTPBOS,theMsg.sBody,thePrefs.theLog);
+                this.writeSingleLine(theSMTPBOS,"",thePrefs.theLog);
+                this.writeSingleLine(theSMTPBOS,".",thePrefs.theLog);
+                
+                // read back that it got through ok
+                s = this.readSingleLine(theSMTPBIS,thePrefs.theLog);
+                theMain.addInfoLine(s);
+                if (!s.startsWith("250")) {
+                    // oh, too bad!
+                    sError = "Message send MAY have failed. Message: ".concat(s);
+                    thePrefs.theLog.log(Level.SEVERE,sError);
+                    throw new Exception(sError);
+                }
+
+            } else {
+                // failed...
+                // oh, too bad!
+                sError = "Mail send failed. Message: ".concat(s);
+                thePrefs.theLog.log(Level.SEVERE,sError);
+                throw new Exception(sError);
+            }
+            
+            // Done, well done!
+        } catch (java.io.IOException eio) {
+            sError = "Unable to talk to SMTP server.";
+            thePrefs.theLog.log(Level.SEVERE,sError);
+            throw new Exception(sError,eio);
+        }
+    }
+    
+    public void logoutPOP3(umbPrefs thePrefs) {
+        try {
+            this.writeSingleLine(thePOPBOS,"QUIT",thePrefs.theLog);
+        } catch (Exception eIgnore) {}
+        
+        try {
+            thePOPSock.close();
         } catch (Exception eIgnore) {}
     }
     
-    private void flushInput(java.util.logging.Logger theLog) {
+    private void flushInput(java.io.BufferedInputStream theBIS, java.util.logging.Logger theLog) {
         // we exist only to flush out any remaining junk in the input buffer
         try {
             if (theBIS.available() > 0) {
@@ -207,21 +338,23 @@ public class umbProfile extends java.lang.Object {
         }
     }
     
-    private String readSingleLine(java.util.logging.Logger theLog) throws java.io.IOException {
-        return readSingleLine(theLog,30);
+    private String readSingleLine(java.io.BufferedInputStream theBIS, java.util.logging.Logger theLog) throws java.io.IOException {
+        return readSingleLine(theBIS,theLog,30);
     }
     
-    private String readSingleLine(java.util.logging.Logger theLog, int iWaitSeconds) throws java.io.IOException {
+    private String readSingleLine(java.io.BufferedInputStream theBIS, java.util.logging.Logger theLog, int iWaitSeconds) throws java.io.IOException {
         byte b[] = new byte[65535];
         String sRet;
         int l = 0;
         
-        while (theBIS.available() < 3 & theSock.isConnected()) {
-            // do nothing....
-            try {
-                this.wait(1000); // wait one second
-            } catch (Exception eIgnore) {}
-        }
+        try {
+            while (theBIS.available() < 3) {
+                // do nothing....
+                try {
+                    this.wait(1000); // wait one second
+                } catch (Exception eIgnore) {}
+            }
+        } catch (java.io.IOException eInterrupted) {}
         
         if (theBIS.available() < 3) {
             // not yet ready...
@@ -234,7 +367,7 @@ public class umbProfile extends java.lang.Object {
         return sRet;
     }
     
-    private void writeSingleLine(String s,java.util.logging.Logger theLog) throws java.io.IOException {
+    private void writeSingleLine(java.io.BufferedOutputStream theBOS, String s,java.util.logging.Logger theLog) throws java.io.IOException {
         theLog.log(Level.FINEST,"Sent: ".concat(s));
         theBOS.write(s.concat("\r\n").getBytes());
         theBOS.flush();

@@ -11,7 +11,6 @@ package umb;
  * @author  chris
  */
 public class umbPrompt extends javax.swing.JDialog {
-    private javax.swing.DefaultListModel theList = new javax.swing.DefaultListModel(); // for the JList
     
     /** A return status code - returned if Cancel button has been pressed */
     public static final int RET_CANCEL = 0;
@@ -19,9 +18,12 @@ public class umbPrompt extends javax.swing.JDialog {
     public static final int RET_OK = 1;
     
     /** Creates new form umbPrompt */
-    public umbPrompt(java.awt.Frame parent, boolean modal) {
+    public umbPrompt(java.awt.Frame parent, boolean modal, umbMessage theMail) {
         super(parent, modal);
         initComponents();
+        this.jLblSubject.setText("Subject: ".concat(theMail.sSubject));
+        this.jLblFrom.setText("From: ".concat(theMail.sFrom));
+        this.jLblDate.setText("Date: ".concat(theMail.sDateSent));
     }
     
     /** @return the return status of this dialog - one of RET_OK or RET_CANCEL */
@@ -46,13 +48,14 @@ public class umbPrompt extends javax.swing.JDialog {
     }
     
     /* returns 0 if no reply, 1+ if to use reply template */
-    public int getReplyTemplate() {
+/*    public int getReplyTemplate() {
         if (this.jChkReply.isSelected()) {
             return this.jCmbTemplate.getSelectedIndex() + 1;
         } else {
               return 0;
         }
     }
+  */
     
     /** This method is called from within the constructor to
      * initialize the form.
@@ -75,12 +78,13 @@ public class umbPrompt extends javax.swing.JDialog {
         jCmbTemplate = new javax.swing.JComboBox();
         jPanel8 = new javax.swing.JPanel();
         jChkRequestAuth = new javax.swing.JCheckBox();
+        jLblFrom = new javax.swing.JLabel();
+        jLblSubject = new javax.swing.JLabel();
+        jLblDate = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
-        jList1 = new javax.swing.JList();
         jPanel6 = new javax.swing.JPanel();
-        jPanel7 = new javax.swing.JPanel();
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -119,7 +123,7 @@ public class umbPrompt extends javax.swing.JDialog {
         jChkDeleteMail.setText("Delete email from server");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         jPanel1.add(jChkDeleteMail, gridBagConstraints);
@@ -127,7 +131,7 @@ public class umbPrompt extends javax.swing.JDialog {
         jChkAddUser.setText("Add user to contact list");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         jPanel1.add(jChkAddUser, gridBagConstraints);
@@ -135,7 +139,7 @@ public class umbPrompt extends javax.swing.JDialog {
         jChkSpam.setText("Report as UCE / spam e-mail");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 5;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         jPanel1.add(jChkSpam, gridBagConstraints);
@@ -144,7 +148,7 @@ public class umbPrompt extends javax.swing.JDialog {
         jChkReply.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 7;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         jPanel1.add(jChkReply, gridBagConstraints);
@@ -153,7 +157,7 @@ public class umbPrompt extends javax.swing.JDialog {
         jCmbTemplate.setEnabled(false);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 8;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.insets = new java.awt.Insets(0, 20, 0, 0);
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -161,37 +165,57 @@ public class umbPrompt extends javax.swing.JDialog {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 9;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
         jPanel1.add(jPanel8, gridBagConstraints);
 
         jChkRequestAuth.setText("Request Authorization");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         jPanel1.add(jChkRequestAuth, gridBagConstraints);
 
-        jPanel3.add(jPanel1, java.awt.BorderLayout.EAST);
+        jLblFrom.setText("From: ...");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        jPanel1.add(jLblFrom, gridBagConstraints);
+
+        jLblSubject.setText("Subject:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        jPanel1.add(jLblSubject, gridBagConstraints);
+
+        jLblDate.setText("Date:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        jPanel1.add(jLblDate, gridBagConstraints);
+
+        jPanel3.add(jPanel1, java.awt.BorderLayout.CENTER);
 
         jLabel1.setText("What would you like to do with the following email?");
         jPanel5.add(jLabel1);
 
         jPanel3.add(jPanel5, java.awt.BorderLayout.NORTH);
 
-        jPanel4.setLayout(new java.awt.BorderLayout());
-
-        jPanel4.add(jList1, java.awt.BorderLayout.CENTER);
-
-        jPanel4.add(jPanel6, java.awt.BorderLayout.WEST);
-
-        jPanel4.add(jPanel7, java.awt.BorderLayout.EAST);
-
-        jPanel3.add(jPanel4, java.awt.BorderLayout.CENTER);
-
         jPanel2.add(jPanel3, java.awt.BorderLayout.CENTER);
+
+        jPanel2.add(jPanel4, java.awt.BorderLayout.WEST);
+
+        jPanel2.add(jPanel6, java.awt.BorderLayout.EAST);
 
         getContentPane().add(jPanel2, java.awt.BorderLayout.CENTER);
 
@@ -217,30 +241,24 @@ public class umbPrompt extends javax.swing.JDialog {
         dispose();
     }
     
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        new umbPrompt(new javax.swing.JFrame(), true).show();
-    }
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel jPanel8;
     private javax.swing.JCheckBox jChkDeleteMail;
-    private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JLabel jLblDate;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JLabel jLblFrom;
     private javax.swing.JPanel buttonPanel;
     private javax.swing.JCheckBox jChkReply;
     private javax.swing.JButton okButton;
+    private javax.swing.JLabel jLblSubject;
     private javax.swing.JCheckBox jChkRequestAuth;
     private javax.swing.JCheckBox jChkAddUser;
     private javax.swing.JButton cancelButton;
-    private javax.swing.JList jList1;
     private javax.swing.JComboBox jCmbTemplate;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JCheckBox jChkSpam;
