@@ -24,14 +24,12 @@ public class umbSMTPMessage {
         sBody = "Please note: the following is spam sent to me.\r\nIf you are the sender, please take any appropriate action to remove me from lists.\r\n.If you are an ISP or mail server administrator, please take appropriate action against any spammers on your network.\r\n\r\n";
         sBody = sBody.concat(theMsg.QuoteMessage());
         if (theMsg.sFrom.length() > 2) addRecip(theMsg.sFrom);
-        if (theMsg.sFrom2.length() > 2) addRecip(theMsg.sFrom);
     }
     
     public void PrepAuthorize(umbMessage theMsg) {
         sSubject = "Authorize request, Re: ".concat(theMsg.sSubject);
         sBody = "Hello. This user uses the Unwanted Mail Blocker, and has requested that you respond with a request for authorization. Please state the reason you wish to contact this user.\r\n\r\n";
         if (theMsg.sFrom.length() > 2) addRecip(theMsg.sFrom);
-        if (theMsg.sFrom2.length() > 2) addRecip(theMsg.sFrom);
     }
 
     public void addRecip(String sRecip) {

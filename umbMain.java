@@ -45,6 +45,7 @@ public class umbMain extends javax.swing.JFrame {
         jPanel53 = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Unwanted Mail Blocker");
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 exitForm(evt);
@@ -56,6 +57,12 @@ public class umbMain extends javax.swing.JFrame {
         jPanel3.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
 
         jButton1.setText("Preferences");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         jPanel3.add(jButton1);
 
         jButton2.setText("Start");
@@ -83,7 +90,7 @@ public class umbMain extends javax.swing.JFrame {
 
         jPanel2.add(jProgressBar1, java.awt.BorderLayout.NORTH);
 
-        jLabel3.setText("...");
+        jLabel3.setText(" ");
         jPanel2.add(jLabel3, java.awt.BorderLayout.SOUTH);
 
         jList1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -103,25 +110,29 @@ public class umbMain extends javax.swing.JFrame {
 
         pack();
     }//GEN-END:initComponents
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // Add your handling code here:
+        umbEditPrefs ep = new umbEditPrefs(thePrefs);
+        ep.show();
+    }//GEN-LAST:event_jButton1ActionPerformed
     
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // Add your handling code here:
         if (jButton2.getText().equalsIgnoreCase("Start")) {
             // start session
             jButton2.setText("Stop");
+            theList.clear();
             theFilter = new umbFilter(this,thePrefs);
-            if (theFilterThread != null) {
-                theFilterThread.stop();
-            }
             theFilterThread = new java.lang.Thread(theFilter);
             theFilterThread.start();
-        } else {
+        } else if (jButton2.getText().equalsIgnoreCase("Stop")) {
             // stop session
-            jButton2.setText("Start");
-            if (theFilterThread != null) {
-                theFilterThread.stop();
-                theFilterThread = null;
-            }
+            jButton2.setText("Stopping");
+            theFilter.bStopRunning = true;
+            // let filterThread keep running, it will get to end of run() and call threadDone below...
+        } else {
+            // Stopping already!!
         }
     }//GEN-LAST:event_jButton2ActionPerformed
     
@@ -133,10 +144,7 @@ public class umbMain extends javax.swing.JFrame {
     public void threadDone() {
         // called from thread..
         jButton2.setText("Start");
-        if (theFilterThread != null) {
-            theFilterThread.stop();
-            theFilterThread = null;
-        }
+        theFilterThread = null;
     }
     
     /**

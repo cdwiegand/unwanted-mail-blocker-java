@@ -50,16 +50,16 @@ public class umbPrefs extends java.lang.Object {
             llProfiles.add(thePOP);// put into linked list
         } // wash rinse repeat
         
-        //    theLog.setLevel(Level.OFF);
+        theLog.setLevel(Level.OFF);
         
-        //    if (bLogPlease) {
-        theLog.setLevel(Level.ALL); // Request that every detail gets logged.
-        try {
-            FileHandler fh = new FileHandler("umbdebug.txt");
-            // Send logger output to our FileHandler.
-            theLog.addHandler(fh); // try to use log file, if can't, oh well
-        } catch (java.io.IOException eIgnoreForNow) {}
-        //    }
+        if (bLogPlease) {
+            theLog.setLevel(Level.ALL); // Request that every detail gets logged.
+            try {
+                FileHandler fh = new FileHandler("umbdebug.txt");
+                // Send logger output to our FileHandler.
+                theLog.addHandler(fh); // try to use log file, if can't, oh well
+            } catch (java.io.IOException eIgnoreForNow) {}
+        }
     }
     
     protected void finalize() {
