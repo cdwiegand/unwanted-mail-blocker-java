@@ -11,6 +11,7 @@ package umb;
  * @author  chris
  */
 public class umbPrompt extends javax.swing.JDialog {
+    private javax.swing.DefaultComboBoxModel cmbModel = new javax.swing.DefaultComboBoxModel();
     
     /** A return status code - returned if Cancel button has been pressed */
     public static final int RET_CANCEL = 0;
@@ -21,6 +22,11 @@ public class umbPrompt extends javax.swing.JDialog {
     public umbPrompt(java.awt.Frame parent, boolean modal, umbMessage theMail) {
         super(parent, modal);
         initComponents();
+        this.jCmbTemplate.setModel(cmbModel);
+        cmbModel.addElement("Spam");
+        cmbModel.addElement("Authorize, please");
+        cmbModel.addElement("Blocked");
+        cmbModel.addElement("Blocked Attachment");
         this.jLblSubject.setText("Subject: ".concat(theMail.sSubject));
         this.jLblFrom.setText("From: ".concat(theMail.sFrom));
         this.jLblDate.setText("Date: ".concat(theMail.sDateSent));
@@ -31,16 +37,8 @@ public class umbPrompt extends javax.swing.JDialog {
         return returnStatus;
     }
     
-    public boolean isSpam() {
-        return this.jChkSpam.isSelected();
-    }
-    
     public boolean getAddUser() {
         return this.jChkAddUser.isSelected();
-    }
-    
-    public boolean getRequestAuth() {
-        return this.jChkRequestAuth.isSelected();
     }
     
     public boolean getDeleteMsg() {
@@ -48,15 +46,14 @@ public class umbPrompt extends javax.swing.JDialog {
     }
     
     /* returns 0 if no reply, 1+ if to use reply template */
-/*    public int getReplyTemplate() {
+    public String getReplyTemplate() {
         if (this.jChkReply.isSelected()) {
-            return this.jCmbTemplate.getSelectedIndex() + 1;
+            return (String) cmbModel.getSelectedItem();
         } else {
-              return 0;
+            return "";
         }
     }
-  */
-    
+  
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -73,11 +70,9 @@ public class umbPrompt extends javax.swing.JDialog {
         jPanel1 = new javax.swing.JPanel();
         jChkDeleteMail = new javax.swing.JCheckBox();
         jChkAddUser = new javax.swing.JCheckBox();
-        jChkSpam = new javax.swing.JCheckBox();
         jChkReply = new javax.swing.JCheckBox();
         jCmbTemplate = new javax.swing.JComboBox();
         jPanel8 = new javax.swing.JPanel();
-        jChkRequestAuth = new javax.swing.JCheckBox();
         jLblFrom = new javax.swing.JLabel();
         jLblSubject = new javax.swing.JLabel();
         jLblDate = new javax.swing.JLabel();
@@ -136,28 +131,18 @@ public class umbPrompt extends javax.swing.JDialog {
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         jPanel1.add(jChkAddUser, gridBagConstraints);
 
-        jChkSpam.setText("Report as UCE / spam e-mail");
+        jChkReply.setText("Reply with template:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 5;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        jPanel1.add(jChkSpam, gridBagConstraints);
-
-        jChkReply.setText("Reply with template:");
-        jChkReply.setEnabled(false);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 7;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         jPanel1.add(jChkReply, gridBagConstraints);
 
-        jCmbTemplate.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "theList" }));
-        jCmbTemplate.setEnabled(false);
+        jCmbTemplate.setModel(new javax.swing.DefaultComboBoxModel(new String[] { null }));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 6;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.insets = new java.awt.Insets(0, 20, 0, 0);
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -165,20 +150,12 @@ public class umbPrompt extends javax.swing.JDialog {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridy = 7;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
         jPanel1.add(jPanel8, gridBagConstraints);
-
-        jChkRequestAuth.setText("Request Authorization");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
-        jPanel1.add(jChkRequestAuth, gridBagConstraints);
 
         jLblFrom.setText("From: ...");
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -256,12 +233,10 @@ public class umbPrompt extends javax.swing.JDialog {
     private javax.swing.JCheckBox jChkReply;
     private javax.swing.JButton okButton;
     private javax.swing.JLabel jLblSubject;
-    private javax.swing.JCheckBox jChkRequestAuth;
     private javax.swing.JCheckBox jChkAddUser;
     private javax.swing.JButton cancelButton;
     private javax.swing.JComboBox jCmbTemplate;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JCheckBox jChkSpam;
     // End of variables declaration//GEN-END:variables
     
     private int returnStatus = RET_CANCEL;

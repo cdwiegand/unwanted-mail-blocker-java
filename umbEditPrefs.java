@@ -17,6 +17,7 @@ public class umbEditPrefs extends javax.swing.JFrame {
     public umbEditPrefs(umbPrefs thePrefsToEdit) {
         initComponents();
         thePrefs = thePrefsToEdit;
+        // now show the prefs...
     }
     
     /** This method is called from within the constructor to
@@ -28,10 +29,9 @@ public class umbEditPrefs extends javax.swing.JFrame {
         java.awt.GridBagConstraints gridBagConstraints;
 
         jPanel1 = new javax.swing.JPanel();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jTabbedPane2 = new javax.swing.JTabbedPane();
         jPanel3 = new javax.swing.JPanel();
         jCheckBox1 = new javax.swing.JCheckBox();
-        jTabbedPane2 = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jList1 = new javax.swing.JList();
@@ -58,17 +58,15 @@ public class umbEditPrefs extends javax.swing.JFrame {
         jPanel1.setLayout(new java.awt.CardLayout());
 
         jPanel1.setName("Main Prefs");
-        jTabbedPane1.setToolTipText("Main Prefs");
+        jTabbedPane2.setToolTipText("Address Book");
+        jTabbedPane2.setName("");
         jPanel3.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
 
         jCheckBox1.setText("Debug");
         jPanel3.add(jCheckBox1);
 
-        jTabbedPane1.addTab("tab1", jPanel3);
+        jTabbedPane2.addTab("tab1", jPanel3);
 
-        jPanel1.add(jTabbedPane1, "card2");
-
-        jTabbedPane2.setToolTipText("Address Book");
         jPanel2.setLayout(new java.awt.BorderLayout(5, 5));
 
         jPanel4.setLayout(new java.awt.BorderLayout(5, 5));
@@ -105,7 +103,6 @@ public class umbEditPrefs extends javax.swing.JFrame {
         jPanel5.add(jTextField1, gridBagConstraints);
 
         jTextField2.setText(" ");
-        jTextField2.setToolTipText("null");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
@@ -175,7 +172,6 @@ public class umbEditPrefs extends javax.swing.JFrame {
     private javax.swing.JCheckBox jCheckBox2;
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JTabbedPane jTabbedPane2;
-    private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JList jList1;

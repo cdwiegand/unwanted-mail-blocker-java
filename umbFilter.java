@@ -25,7 +25,9 @@ public class umbFilter extends java.lang.Object implements Runnable {
         // check all POP3 servers...
         java.util.ListIterator li;
         umbAddressBook theBook = thePrefs.theBook;
+        umbKnownAddress ka;
         umbProfile thePOP;
+        umbMessage theMail;
         
         try {
             li = thePrefs.llProfiles.listIterator(); // get list iterator
@@ -34,7 +36,6 @@ public class umbFilter extends java.lang.Object implements Runnable {
                 try {
                     int iMsg = 0;
                     int iMsgCount = 0;
-                    umbMessage theMail;
                     theMainForm.updateStatus(0,1,"Connecting to server ".concat(thePOP.sPOPServer));
                     if (bStopRunning) throw new Exception("Thread stopped.");
                     
@@ -61,8 +62,21 @@ public class umbFilter extends java.lang.Object implements Runnable {
                                 theMainForm.addInfoLine("From: ".concat(theMail.sFrom));
                                 // Is it a recognized address?
                                 if (bStopRunning) return;
-                                if (theBook.isOKAddress(theMail)) {
-                                    theMainForm.addInfoLine("Known recipient - it's ok.");
+                                
+                                ka = theBook.getAddress(theMail.sFromAddress);
+                                if (ka != null) {
+                                    // found a recipient, verify no other problems...
+                                    if (!ka.bMaySendMail) {
+                                        umbSMTPMessage newSMTP = new umbSMTPMessage();
+                                        newSMTP.PrepResponse(theMail,"Spam");
+                                        thePOP.sendMailSMTP(thePrefs,theMainForm,newSMTP);
+                                    }
+                                    if (!ka.bMaySendAttachments && theMail.iAttachments > 1) {
+                                        umbSMTPMessage newSMTP = new umbSMTPMessage();
+                                        newSMTP.PrepResponse(theMail,"Blocked Attachment");
+                                        thePOP.sendMailSMTP(thePrefs,theMainForm,newSMTP);
+                                    }
+                                    
                                 } else {
                                     // unknown...
                                     theMainForm.addInfoLine("Unknown recipient - prompting for action.");
@@ -71,21 +85,18 @@ public class umbFilter extends java.lang.Object implements Runnable {
                                     if (thePrompt.getReturnStatus() == thePrompt.RET_CANCEL) {
                                         // cancelled - ignore this spam
                                     } else {
-                                        if (thePrompt.isSpam()) {
-                                            umbSMTPMessage newSMTP = new umbSMTPMessage();
-                                            newSMTP.PrepSpam(theMail);
-                                            thePOP.sendMailSMTP(thePrefs,theMainForm,newSMTP);
-                                        }
-                                        if (thePrompt.getRequestAuth()) {
-                                            umbSMTPMessage newSMTP = new umbSMTPMessage();
-                                            newSMTP.PrepAuthorize(theMail);
-                                            thePOP.sendMailSMTP(thePrefs,theMainForm,newSMTP);
-                                        }
+                                        String sResponse;
                                         if (thePrompt.getAddUser()) {
                                             theBook.AddAddress(theMail.sFrom);
                                         }
                                         if (thePrompt.getDeleteMsg()) {
                                             thePOP.deletePOPMessage(iMsg,thePrefs,theMainForm);
+                                        }
+                                        sResponse = thePrompt.getReplyTemplate();
+                                        if (sResponse.length() > 0) {
+                                            umbSMTPMessage newSMTP = new umbSMTPMessage();
+                                            newSMTP.PrepResponse(theMail,sResponse);
+                                            thePOP.sendMailSMTP(thePrefs,theMainForm,newSMTP);
                                         }
                                     } // return status ?= cancel (ignore) or ok (filter)
                                 } // known vs. unknwon recip

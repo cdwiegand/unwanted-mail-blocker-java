@@ -26,11 +26,8 @@ public class umbPrefs extends java.lang.Object {
     public umbPrefs() {
         StringTokenizer st;
         String sTmp;
-        Preferences prefs = Preferences.userRoot(); // get prefs for THIS package
+        Preferences prefs = Preferences.userRoot().node("/Wiegand/UnwantedMailBlocker"); // get prefs for THIS package
         Preferences childNode;
-        
-        prefs = prefs.node("Wiegand"); // /Wiegand
-        prefs = prefs.node("UnwantedMailBlocker"); // /Wiegand/UnwantedMailBlocker
         
         // To assist end-users in finding their prefs (for debugging) we write this out:
         prefs.put("TestString","UMBTest");
@@ -64,12 +61,12 @@ public class umbPrefs extends java.lang.Object {
     
     protected void finalize() {
         String sTmp;
-        Preferences prefs = Preferences.userRoot(); // get prefs for THIS package
+        Preferences prefs = Preferences.userRoot().node("/Wiegand/UnwantedMailBlocker"); // get prefs for THIS package
         Preferences childNode;
         java.util.ListIterator li;
         umbProfile thePOP;
         
-        prefs = prefs.node("/Wiegand/UnwantedMailBlocker");
+        prefs.putBoolean("DebugLog",bLogPlease);
         
         // Save profiles...
         li = llProfiles.listIterator(); // get list iterator

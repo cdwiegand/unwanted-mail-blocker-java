@@ -63,24 +63,17 @@ public class umbAddressBook {
         return retValue;
     }
     
-    public boolean isOKAddress(umbMessage theEmail) {
-        int i = 0;
-        String s;
+    public umbKnownAddress getAddress(String emailAddress) {
         umbKnownAddress ka;
         java.util.ListIterator li = llAddresses.listIterator();
         
-        System.out.println("theEmail.sFromAddress = ".concat(theEmail.sFromAddress));
         while (li.hasNext()) {
             ka = (umbKnownAddress) li.next();
-            System.out.println("ka.sAddress = ".concat(ka.sAddress));
-            if (ka.sAddress.equalsIgnoreCase(theEmail.sFromAddress)) {
-                System.out.println("     matched");
-                return true;
+            if (ka.sAddress.equalsIgnoreCase(emailAddress)) {
+                return ka;
             }
         }
-        
-        System.out.println("     did not match");
-        return false;
+        return null;
     }
     
 }

@@ -14,12 +14,25 @@ public class umbMessage extends java.lang.Object {
     public String sFromAddress = new String(); // someone@nowhere.com in From: headers
     public String sSubject = new String(); // Subject: Something or other
     public String sDateSent = new String(); // Date: (sent)
+    public int iAttachments = 0;
     private boolean bNotInHeadersAnymore = false; // set to true when we're in the body
     public java.util.LinkedList llHeaders = new java.util.LinkedList(); // headers
     public java.util.LinkedList llBody = new java.util.LinkedList(); // body
     
     /** Creates a new instance of umbMessage */
     public umbMessage() {
+    }
+    
+    public java.util.LinkedList possibleSpamReportAddys() {
+        String s = sFrom.substring(sFrom.indexOf("@")); // now contains only @someisp.com
+        java.util.LinkedList ll = new java.util.LinkedList();
+
+        ll.add("spam".concat(s));
+        ll.add("abuse".concat(s));
+        ll.add("administrator".concat(s));
+        ll.add("postmaster".concat(s));
+        ll.add("admin".concat(s));
+        return ll;
     }
     
     public String QuoteMessage() {
@@ -45,6 +58,7 @@ public class umbMessage extends java.lang.Object {
         if (bNotInHeadersAnymore) {
             // in body...
             llBody.add(s);
+            if (s.startsWith("Content-Type:")) iAttachments += 1;
             // FIXME: add detection of "attachments" for future filtering...
         } else {
             // in headers...

@@ -37,8 +37,14 @@ public class umbKnownAddress {
         // sAddress;
         sRet = sAddress.concat(";");
         
-        // sAddress;sName;
-        sRet = sRet.concat(sName).concat(";");
+        // sAddress;sName
+        if (sName.length() > 1) {
+            sRet = sRet.concat(sName).concat(";");
+        } else {
+            java.util.StringTokenizer stTemp = new java.util.StringTokenizer(sAddress,"@");
+            sRet = sRet.concat(stTemp.nextToken()).concat(";");
+            // returns the part before the @ in the email
+        }
 
         if (bMaySendMail) {
             sRet = sRet.concat("Y;");
